@@ -1,0 +1,38 @@
+<div class="
+    {# Use form-floating for inputs and textareas, form-group for select/checkbox #}
+    {% if field.field.widget.input_type != 'select' and field.field.widget.input_type != 'checkbox' %}
+        form-floating mb-3
+    {% else %}
+        form-group mb-3
+    {% endif %}
+    ">
+
+    {# 1. Render the field #}
+    {% if field.field.widget.input_type == 'checkbox' %}
+        <div class="form-check">
+            {{ field }}
+            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        </div>
+    {% else %}
+        {# Render standard input, select, or textarea field #}
+        {{ field }}
+    {% endif %}
+
+    {# 2. Render the label #}
+    {% if field.field.widget.input_type != 'select' and field.field.widget.input_type != 'checkbox' %}
+        {# Label for floating style #}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% elif field.field.widget.input_type == 'select' %}
+        {# Standard label for select boxes #}
+        <label for="{{ field.id_for_label }}" class="form-label d-block text-muted small mb-1">{{ field.label }}</label>
+    {% endif %}
+
+    {# 3. Render help text and errors #}
+    {% if field.help_text %}
+        <small class="form-text text-muted ms-1">{{ field.help_text }}</small>
+    {% endif %}
+    {% for error in field.errors %}
+        <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+
+</div>

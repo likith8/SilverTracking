@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Delete Customer</h2>
+
+    <div class="alert alert-danger">
+        <strong>Warning:</strong> This will permanently delete:
+        <ul>
+            <li>The customer <strong>{{ customer.name }}</strong></li>
+            <li>All silver given records</li>
+            <li>All return records</li>
+            <li>All transactions linked to this customer</li>
+        </ul>
+        This action cannot be undone!
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <p>To confirm, type the customer name:</p>
+
+        <input type="text" name="confirm_name" class="form-control" placeholder="Enter customer name">
+
+        {% if error %}
+            <p class="text-danger mt-2">{{ error }}</p>
+        {% endif %}
+
+        <button class="btn btn-danger mt-3">Delete Permanently</button>
+        <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary mt-3">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}

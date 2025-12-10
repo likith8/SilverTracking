@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+
+    <!-- PAGE TITLE -->
+    <div class="d-flex justify-content-center mb-5">
+        <h1 class="display-6 text-dark border-bottom border-primary border-3 pb-2">
+            📦 {{ title }}
+        </h1>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="card shadow-lg border-0 bg-light">
+        <div class="card-body p-md-5">
+
+            <form method="POST" id="productForm" class="row g-4">
+                {% csrf_token %}
+
+                <!-- NAV PILLS -->
+                <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="pill" 
+                                data-bs-target="#general-section" type="button">
+                            📝 General Details
+                        </button>
+                    </li>
+
+                    <li class="nav-item">
+                        <button class="nav-link" id="pricing-tab" data-bs-toggle="pill" 
+                                data-bs-target="#pricing-section" type="button">
+                            💰 Pricing & Weight
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- TAB CONTENT -->
+                <div class="tab-content">
+
+                    <!-- GENERAL DETAILS TAB -->
+                    <div class="tab-pane fade show active" id="general-section">
+
+                        <div class="row g-4">
+
+                            {% for field in form %}
+                                {% if field.name not in "gross_weight mc_rate melting_percent" %}
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ field }}
+                                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {% for error in field.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                    <!-- PRICING TAB -->
+                    <div class="tab-pane fade" id="pricing-section">
+
+                        <div class="row g-4 justify-content-center">
+
+                            <!-- GROSS WEIGHT -->
+                            <div class="col-md-4">
+                                <div class="card p-3 border-primary border-2 shadow-sm">
+                                    <h5 class="card-title text-primary">⚖️ Gross Weight</h5>
+                                    <div class="form-floating">
+                                        {{ form.gross_weight }}
+                                        <label for="{{ form.gross_weight.id_for_label }}">{{ form.gross_weight.label }}</label>
+                                        {% for error in form.gross_weight.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MC RATE -->
+                            <div class="col-md-4">
+                                <div class="card p-3 border-primary border-2 shadow-sm">
+                                    <h5 class="card-title text-primary">💵 MC Rate</h5>
+                                    <div class="form-floating">
+                                        {{ form.mc_rate }}
+                                        <label for="{{ form.mc_rate.id_for_label }}">{{ form.mc_rate.label }}</label>
+                                        {% for error in form.mc_rate.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MELTING PERCENT -->
+                            <div class="col-md-4">
+                                <div class="card p-3 border-primary border-2 shadow-sm">
+                                    <h5 class="card-title text-primary">🔥 Melting %</h5>
+                                    <div class="form-floating">
+                                        {{ form.melting_percent }}
+                                        <label for="{{ form.melting_percent.id_for_label }}">{{ form.melting_percent.label }}</label>
+                                        {% for error in form.melting_percent.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SUBMIT BUTTON -->
+                <div class="col-12 mt-5 text-center border-top pt-4">
+                    <button type="submit" class="btn btn-lg btn-success me-3 shadow-sm">
+                        💾 Save Product
+                    </button>
+
+                    <a href="{% url 'products:product_list' %}" class="btn btn-lg btn-outline-dark">
+                        🔙 Go Back
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- JS (same as customer form) -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const productForm = document.getElementById("productForm");
+    if (!productForm) return;
+
+    productForm.querySelectorAll(".form-floating input, .form-floating select")
+        .forEach(field => {
+            if (!field.classList.contains("form-control")) {
+                field.classList.add("form-control");
+            }
+        });
+
+    const inputs = Array.from(productForm.querySelectorAll("input, select"));
+    inputs.forEach((field, index) => {
+        field.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                inputs[index + 1] ? inputs[index + 1].focus() : productForm.submit();
+            }
+        });
+    });
+
+});
+</script>
+
+{% endblock %}

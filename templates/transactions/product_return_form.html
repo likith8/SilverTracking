@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+
+    <!-- PAGE TITLE -->
+    <div class="d-flex justify-content-center mb-4">
+        <h2 class="display-6 text-dark border-bottom border-primary border-3 pb-2">
+            <i class="fas fa-undo-alt me-2 text-primary"></i>
+            {% if edit %}Edit{% else %}Add{% endif %} Product Return
+        </h2>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="card shadow-lg border-0 bg-light">
+        <div class="card-body p-md-5">
+            <form method="post" id="productReturnForm" class="row g-4">
+                {% csrf_token %}
+
+                <!-- Customer -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.customer }}
+                        <label for="{{ form.customer.id_for_label }}">{{ form.customer.label }}</label>
+                        {% for error in form.customer.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Product -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <select id="id_product" name="product" class="form-select">
+                            <option value="">Select Product</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}"
+                                data-mc-type="{{ p.mc_type }}"
+                                data-mc-rate="{{ p.mc_rate }}"
+                                {% if form.instance.product and form.instance.product.id == p.id %} selected {% endif %}>
+                                {{ p.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <label for="id_product">Product</label>
+                    </div>
+                </div>
+
+                <!-- Gross Weight -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.gross_weight }}
+                        <label for="{{ form.gross_weight.id_for_label }}">{{ form.gross_weight.label }}</label>
+                        {% for error in form.gross_weight.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Melting Percent -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.melting_percent }}
+                        <label for="{{ form.melting_percent.id_for_label }}">{{ form.melting_percent.label }}</label>
+                        {% for error in form.melting_percent.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Pure Weight -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" id="pure_weight" name="pure_weight" class="form-control" readonly>
+                        <label for="pure_weight">Pure Weight (g)</label>
+                    </div>
+                </div>
+
+                <!-- MC Amount -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" id="mc_amount" name="mc_amount" class="form-control" readonly>
+                        <label for="mc_amount">MC Amount</label>
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.date }}
+                        <label for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+                        {% for error in form.date.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- MC Given -->
+                <div class="col-md-6 mt-3">
+                    <div class="form-check">
+                        {{ form.mc_given }}
+                        <label class="form-check-label" for="{{ form.mc_given.id_for_label }}">MC Given</label>
+                    </div>
+                </div>
+
+                <!-- MC Given Date -->
+                <div class="col-md-6" id="mc_date_div" style="display: none;">
+                    <div class="form-floating">
+                        {{ form.mc_given_date }}
+                        <label for="{{ form.mc_given_date.id_for_label }}">MC Given Date</label>
+                        {% for error in form.mc_given_date.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 mt-5 text-center border-top pt-4">
+                    <button type="submit" class="btn btn-lg btn-success me-3 shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i> 💾 Submit & Save
+                    </button>
+                    <a href="{% url 'transactions:product_return_list' %}" class="btn btn-lg btn-outline-dark shadow-sm">
+                        <i class="fas fa-undo me-2"></i> 🔙Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const grossInput = document.getElementById('id_gross_weight');
+    const meltingInput = document.getElementById('id_melting_percent');
+    const productSelect = document.getElementById('id_product');
+    const pureField = document.getElementById('pure_weight');
+    const mcField = document.getElementById('mc_amount');
+
+    function parseFloatSafe(v){ 
+        const n = parseFloat(v); 
+        return isNaN(n) ? 0 : n; 
+    }
+
+    function updateCalculations(){
+        const gross = parseFloatSafe(grossInput.value);
+        const melting = parseFloatSafe(meltingInput.value);
+        const pure = gross * (melting / 100);
+        pureField.value = pure.toFixed(3);
+
+        const selected = productSelect.options[productSelect.selectedIndex];
+        const mcType = selected.dataset.mcType || '';
+        const mcRate = parseFloatSafe(selected.dataset.mcRate);
+
+        let mc = 0;
+        if(mcType === 'per_gram'){
+            mc = gross * mcRate;
+        } else if(mcType === 'per_kg'){
+            mc = (gross / 1000) * mcRate;
+        }
+
+        mcField.value = mc.toFixed(2);
+    }
+
+    [grossInput, meltingInput, productSelect].forEach(el => {
+        if(el) el.addEventListener('input', updateCalculations);
+        if(el && el.tagName === 'SELECT') el.addEventListener('change', updateCalculations);
+    });
+
+    updateCalculations();
+
+    // MC Given checkbox logic
+    const mcCheckbox = document.getElementById("id_mc_given");
+    const mcDateDiv = document.getElementById("mc_date_div");
+
+    function toggleMCDate() {
+        mcDateDiv.style.display = mcCheckbox.checked ? "block" : "none";
+    }
+
+    mcCheckbox.addEventListener("change", toggleMCDate);
+    toggleMCDate();
+});
+</script>
+{% endblock %}

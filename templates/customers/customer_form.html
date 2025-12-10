@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+
+    <!-- PAGE TITLE -->
+    <div class="d-flex justify-content-center mb-5">
+        <h1 class="display-6 text-dark border-bottom border-primary border-3 pb-2">
+            👤 {{ title }}
+        </h1>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="card shadow-lg border-0 bg-light">
+        <div class="card-body p-md-5">
+
+            <form method="POST" id="customerForm" class="row g-4">
+                {% csrf_token %}
+
+                <!-- NAV PILLS -->
+                <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="pill" 
+                                data-bs-target="#general-section" type="button">
+                            ℹ️ General Information
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="financial-tab" data-bs-toggle="pill" 
+                                data-bs-target="#financial-section" type="button">
+                            💰 Financial Details
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- TAB CONTENT -->
+                <div class="tab-content">
+
+                    <!-- GENERAL INFORMATION TAB -->
+                    <div class="tab-pane fade show active" id="general-section">
+
+                        <div class="row g-4">
+
+                            <!-- NAME FIELD -->
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    {{ form.name }}
+                                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+
+                                    {% for error in form.name.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- OTHER GENERAL FIELDS -->
+                            {% for field in form %}
+                                {% if field.name != 'name' and field.name != 'opening_balance' %}
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ field }}
+                                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+                                            {% for error in field.errors %}
+                                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                        </div>
+                    </div>
+
+                    <!-- FINANCIAL TAB -->
+                    <div class="tab-pane fade" id="financial-section">
+
+                        <div class="row g-4 justify-content-center">
+
+                            <div class="col-md-6">
+                                <div class="card p-3 border-primary border-2 shadow-sm">
+
+                                    <h5 class="card-title text-primary">⚖️ Initial Balance</h5>
+                                    <p class="text-muted small">Enter the customer's initial balance (grams).</p>
+
+                                    <div class="form-floating">
+                                        {{ form.opening_balance }}
+                                        <label for="{{ form.opening_balance.id_for_label }}">
+                                            {{ form.opening_balance.label }}
+                                        </label>
+
+                                        {% for error in form.opening_balance.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SUBMIT BUTTONS -->
+                <div class="col-12 mt-5 text-center border-top pt-4">
+                    <button type="submit" class="btn btn-lg btn-success me-3 shadow-sm">
+                        🚀 Submit & Save
+                    </button>
+
+                    <a href="{% url 'customers:customer_list' %}" class="btn btn-lg btn-outline-dark">
+                        🔙 Go Back
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- FORM JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const customerForm = document.getElementById("customerForm");
+    if (!customerForm) return;
+
+    // Ensure floating labels work
+    customerForm.querySelectorAll(".form-floating input, .form-floating select, .form-floating textarea")
+    .forEach(field => {
+        if (!field.classList.contains("form-control")) {
+            field.classList.add("form-control");
+        }
+    });
+
+    // Enter key navigation
+    const inputs = Array.from(customerForm.querySelectorAll("input, select, textarea"));
+    inputs.forEach((field, index) => {
+        field.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                let next = inputs[index + 1];
+                while (next && next.closest(".tab-pane") && !next.closest(".tab-pane").classList.contains("active")) {
+                    next = inputs[++index];
+                }
+                next ? next.focus() : customerForm.submit();
+            }
+        });
+    });
+
+    // Opening balance validation
+    const openingBalanceInput = document.getElementById("id_opening_balance");
+
+    if (openingBalanceInput) {
+        openingBalanceInput.addEventListener("input", function () {
+            let val = this.value;
+
+        // Allow single leading minus
+            if (val === "-") {
+            // allow just "-" for now, don't sanitize yet
+            return;
+            }
+
+        // Detect if negative
+            const isNegative = val.startsWith("-");
+        // Remove all non-digit and non-dot characters
+            val = val.replace(/[^0-9.]/g, "");
+
+        // Only one dot
+            const parts = val.split(".");
+            if (parts.length > 2) {
+            val = parts[0] + "." + parts.slice(1).join("");
+            }
+
+        // Limit to 3 decimal places
+            if (parts[1] && parts[1].length > 3) {
+            parts[1] = parts[1].substring(0, 3);
+            val = parts.join(".");
+            }
+
+        // Re-add negative sign if needed
+            if (isNegative) val = "-" + val;
+
+            this.value = val;
+        });
+
+        openingBalanceInput.addEventListener("blur", function () {
+            if (this.value && this.value !== "-") {
+            const v = parseFloat(this.value);
+            this.value = !isNaN(v) ? v.toFixed(3) : "0.000";
+            }
+        });
+}
+</script>
+
+{% endblock %}
